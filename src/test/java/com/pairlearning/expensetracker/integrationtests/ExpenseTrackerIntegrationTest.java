@@ -47,9 +47,6 @@ public class ExpenseTrackerIntegrationTest {
 
     private String token;
 
-    private String baseUrl = "http://localhost:8080";
-
-
     @Container
     private static final PostgreSQLContainer<?> postgresqlContainer = new PostgreSQLContainer<>("postgres:latest")
             .withDatabaseName("expensetrackerdb")
