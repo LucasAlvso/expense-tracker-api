@@ -3,7 +3,6 @@ package com.pairlearning.expensetracker.systemtests;
 import io.restassured.response.Response;
 import org.junit.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Map;
 
@@ -14,7 +13,59 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class AuthorizationTest {
     public static String baseUrl = "http://localhost:8080";
 
-    public static ObjectMapper objectMapper = new ObjectMapper();
+    @Test
+    public void userShouldntBeAbleToRegisterExistingEmail(){
+        String randomEmail = "email" + System.currentTimeMillis() + "@test.com";
+
+        String firstRequestBody = "{ \"firstName\": \"Test\", \"lastName\": \"User\", \"email\": \""+randomEmail+"\", \"password\": \"123\" }";
+        String secondRequestBody = "{ \"firstName\": \"Test2\", \"lastName\": \"Use2r\", \"email\": \""+randomEmail+"\", \"password\": \"456\" }";
+
+        Response firstRegistration = given()
+                .header("Content-Type", "application/json")
+                .body(firstRequestBody)
+                .post(baseUrl+"/api/users/register");
+        assertEquals(200, firstRegistration.getStatusCode());
+
+        Response secondRegistration = given()
+                .header("Content-Type", "application/json")
+                .body(secondRequestBody)
+                .post(baseUrl+"/api/users/register");
+        assertEquals(401, secondRegistration.getStatusCode());
+    }
+
+    @Test
+    public void userShouldntBeAbleToRegisterExistingEmailButWithDifferentCase(){
+        String randomEmail = "email" + System.currentTimeMillis() + "@test.com";
+        String randomEmailUpper = "EMAIL" + System.currentTimeMillis() + "@TEST.COM";
+
+        String firstRequestBody = "{ \"firstName\": \"Test\", \"lastName\": \"User\", \"email\": \""+randomEmail+"\", \"password\": \"123\" }";
+        String secondRequestBody = "{ \"firstName\": \"Test2\", \"lastName\": \"Use2r\", \"email\": \""+randomEmailUpper+"\", \"password\": \"456\" }";
+
+        Response firstRegistration = given()
+                .header("Content-Type", "application/json")
+                .body(firstRequestBody)
+                .post(baseUrl+"/api/users/register");
+        assertEquals(200, firstRegistration.getStatusCode());
+
+        Response secondRegistration = given()
+                .header("Content-Type", "application/json")
+                .body(secondRequestBody)
+                .post(baseUrl+"/api/users/register");
+        assertEquals(401, secondRegistration.getStatusCode());
+    }
+
+    @Test
+    public void emailMustHaveACapOf30CharactersInSize(){
+        String randomEmail = "emailaaaaaaa" + System.currentTimeMillis() + "@test.com";
+
+        String requestBody = "{ \"firstName\": \"Test\", \"lastName\": \"User\", \"email\": \""+randomEmail+"\", \"password\": \"123\" }";
+
+        Response response = given()
+                .header("Content-Type", "application/json")
+                .body(requestBody)
+                .post(baseUrl+"/api/users/register");
+        assertEquals(401, response.getStatusCode());
+    }
 
 
     @Test
@@ -88,6 +139,56 @@ public class AuthorizationTest {
         assertEquals(200, categoriesResponse.getStatusCode());
         assertEquals("[]", categoriesResponse.getBody().asString());
     }
+
+    @Test
+    public void invalidEmailFormatShouldReturnUnauthorized() {
+        String requestBody = "{ \"firstName\": \"Test\", \"lastName\": \"User\", \"email\": \"invalid-email\", \"password\": \"123456\" }";
+
+        Response response = given()
+                .header("Content-Type", "application/json")
+                .body(requestBody)
+                .post(baseUrl + "/api/users/register");
+        assertEquals(401, response.getStatusCode());
+    }
+
+    // Validation failed, test won't pass. Defect detected.
+    @Test
+    public void emptyPasswordShouldReturnBadRequest() {
+        String randomEmail = "email" + System.currentTimeMillis() + "@test.com";
+        String requestBody = "{ \"firstName\": \"Test\", \"lastName\": \"User\", \"email\": \""+randomEmail+"\", \"password\": \"\" }";
+
+        Response response = given()
+                .header("Content-Type", "application/json")
+                .body(requestBody)
+                .post(baseUrl + "/api/users/register");
+        assertEquals(400, response.getStatusCode());
+    }
+
+
+    // Validation failed, test won't pass. Defect detected.
+    @Test
+    public void emptyRequiredFieldsShouldReturnBadRequest() {
+        String randomEmail = "email" + System.currentTimeMillis() + "@test.com";
+        String requestBody = "{ \"firstName\": \"\", \"lastName\": \"\", \"email\": \""+randomEmail+"\", \"password\": \"123\" }";
+
+        Response response = given()
+                .header("Content-Type", "application/json")
+                .body(requestBody)
+                .post(baseUrl + "/api/users/register");
+        assertEquals(400, response.getStatusCode());
+    }
+
+    @Test
+    public void accessCategoriesWithInvalidBearerPrefixShouldReturnForbidden() {
+        String invalidToken = "invalidtoken";
+
+        Response response = given()
+                .header("Authorization", "InvalidBearer " + invalidToken)
+                .get(baseUrl + "/api/categories");
+        assertEquals(403, response.getStatusCode());
+    }
+
+
 
 
 }
