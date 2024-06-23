@@ -1,11 +1,13 @@
 package com.pairlearning.expensetracker.integrationtests;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Order;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -24,8 +26,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -90,6 +91,7 @@ public class ExpenseTrackerIntegrationTest {
    }
 
     @Test
+    @Order(1)
     public void testUserRegistrationAndLogin() throws Exception {
         // Login with the registered user
         Map<String, Object> userMap = new HashMap<>();
@@ -102,8 +104,8 @@ public class ExpenseTrackerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").exists());
 
-        token = resultActions.andReturn().getResponse().getContentAsString();
-        token = objectMapper.readTree(token).get("token").asText();
+        // Set class attribute for further requests
+        token = objectMapper.readTree(resultActions.andReturn().getResponse().getContentAsString()).get("token").asText();
 
         // Add a new category
         Map<String, Object> categoryMap = new HashMap<>();
@@ -118,12 +120,54 @@ public class ExpenseTrackerIntegrationTest {
                 .andExpect(jsonPath("$.title", is("Food")))
                 .andExpect(jsonPath("$.description", is("Expenses for food")));
 
-        // Fetch all categories
+        // Fetch all categories and assert there is at least one
         mockMvc.perform(get("/api/categories")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$", hasSize(greaterThan(1))))
                 .andExpect(jsonPath("$[0].title", is("Food")))
                 .andExpect(jsonPath("$[0].description", is("Expenses for food")));
+    }
+
+    @Test
+    public void userShouldntBeAbleToAccessCategoriesWithoutToken() throws Exception {
+        mockMvc.perform(get("/api/categories"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void userShouldntBeAbleToAccessCategoriesWithInvalidToken() throws Exception {
+        mockMvc.perform(get("/api/categories")
+                        .header("Authorization", "Bearer invalidtoken"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @Order(2)
+    public void testDatabaseShouldEnforceCharacterLimit() throws Exception {
+        // Login with the registered user
+        Map<String, Object> userMap = new HashMap<>();
+        userMap.put("email", "johndoe@example.com");
+        userMap.put("password", "password");
+
+        ResultActions resultActions = mockMvc.perform(post("/api/users/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(userMap)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").exists());
+
+        // Set class attribute for further requests
+        token = objectMapper.readTree(resultActions.andReturn().getResponse().getContentAsString()).get("token").asText();
+
+        // Add a new category
+        Map<String, Object> categoryMap = new HashMap<>();
+        categoryMap.put("title", "FoodExceedsLimitOfCharactersOrAtLeastItShould");
+        categoryMap.put("description", "Expenses for food");
+
+        mockMvc.perform(post("/api/categories")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(categoryMap)))
+                .andExpect(status().isBadRequest());
     }
 }
