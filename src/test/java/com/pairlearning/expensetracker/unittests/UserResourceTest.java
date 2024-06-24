@@ -56,6 +56,50 @@ public class UserResourceTest {
     }
 
     @Test
+    public void testRegisterUserWithoutPassword() {
+        // Prepare user registration data
+        Map<String, Object> userMap = new HashMap<>();
+        userMap.put("firstName", "John");
+        userMap.put("lastName", "Doe");
+        userMap.put("email", "john.doe@example.com");
+        userMap.put("password", null);
+
+        // Mock UserService behavior for registration
+        User mockUser = new User(1, "John", "Doe", "john.doe@example.com", null);
+        when(userService.registerUser("John", "Doe", "john.doe@example.com", null)).thenReturn(mockUser);
+
+        // Perform user registration
+        ResponseEntity<Map<String, String>> responseEntity = userResource.registerUser(userMap);
+
+        // Verify that a valid JWT token is returned
+        assertNotNull(responseEntity);
+        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+        assertFalse(responseEntity.getBody().containsKey("token"));
+    }
+
+    @Test
+    public void testRegisterUserWithoutEmail() {
+        // Prepare user registration data
+        Map<String, Object> userMap = new HashMap<>();
+        userMap.put("firstName", "John");
+        userMap.put("lastName", "Doe");
+        userMap.put("email", null);
+        userMap.put("password", "password123");
+
+        // Mock UserService behavior for registration
+        User mockUser = new User(1, "John", "Doe", null, "password123");
+        when(userService.registerUser("John", "Doe", null, "password123")).thenReturn(mockUser);
+
+        // Perform user registration
+        ResponseEntity<Map<String, String>> responseEntity = userResource.registerUser(userMap);
+
+        // Verify that a valid JWT token is returned
+        assertNotNull(responseEntity);
+        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+        assertFalse(responseEntity.getBody().containsKey("token"));
+    }
+
+    @Test
     public void testLoginUser() {
         // Prepare user login data
         Map<String, Object> userMap = new HashMap<>();
@@ -84,7 +128,7 @@ public class UserResourceTest {
 
         // Mock UserService behavior for invalid login
         // Had to put new User() because it breaks if return null
-        when(userService.validateUser("teste@example.com", "invalid_password")).thenReturn(new User());
+        when(userService.validateUser("teste@example.com", "invalid_password")).thenReturn(null);
 
         // Perform user login
         ResponseEntity<Map<String, String>> responseEntity = userResource.loginUser(userMap);
@@ -92,6 +136,26 @@ public class UserResourceTest {
         // Verify that an error response is returned
         assertNotNull(responseEntity);
         assertEquals(HttpStatus.FORBIDDEN, responseEntity.getStatusCode());
+        assertFalse(responseEntity.getBody().containsKey("token"));
+    }
+
+    @Test
+    public void testLoginEmptyUser() {
+        // Prepare user login data
+        Map<String, Object> userMap = new HashMap<>();
+        userMap.put("email", "");
+        userMap.put("password", "");
+
+        // Mock UserService behavior for login
+        User mockUser = new User(1, "John", "Doe", "", "");
+        when(userService.validateUser("", "")).thenReturn(mockUser);
+
+        // Perform user login
+        ResponseEntity<Map<String, String>> responseEntity = userResource.loginUser(userMap);
+
+        // Verify that a valid JWT token is returned
+        assertNotNull(responseEntity);
+        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
         assertFalse(responseEntity.getBody().containsKey("token"));
     }
 
