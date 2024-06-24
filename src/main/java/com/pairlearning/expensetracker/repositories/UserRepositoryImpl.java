@@ -75,4 +75,8 @@ public class UserRepositoryImpl implements UserRepository {
                 rs.getString("EMAIL"),
                 rs.getString("PASSWORD"));
     });
+
+    public void setJdbcTemplate(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
 }

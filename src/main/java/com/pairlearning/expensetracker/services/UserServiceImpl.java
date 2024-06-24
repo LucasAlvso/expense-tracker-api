@@ -34,4 +34,8 @@ public class UserServiceImpl implements UserService {
         Integer userId = userRepository.create(firstName, lastName, email, password);
         return userRepository.findById(userId);
     }
+
+    public void setUserRepository(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 }
