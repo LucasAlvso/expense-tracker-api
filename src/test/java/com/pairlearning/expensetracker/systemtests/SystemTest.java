@@ -10,7 +10,7 @@ import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
-public class SystemTests
+public class SystemTest
 {
     public static String baseUrl = "http://localhost:8080";
 

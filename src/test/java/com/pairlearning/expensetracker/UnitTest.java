@@ -15,7 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 		UserServiceImplTest.class,
 		UserResourceTest.class
 })
-class UnitTests
+class UnitTest
 {
 
 	@Test
