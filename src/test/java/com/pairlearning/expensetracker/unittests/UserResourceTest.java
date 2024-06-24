@@ -126,8 +126,7 @@ public class UserResourceTest {
         userMap.put("email", "teste@example.com");
         userMap.put("password", "invalid_password");
 
-        // Mock UserService behavior for invalid login
-        // Had to put new User() because it breaks if return null
+        // Mock UserService behavior for user not found
         when(userService.validateUser("teste@example.com", "invalid_password")).thenReturn(null);
 
         // Perform user login
