@@ -1,12 +1,7 @@
 package com.pairlearning.expensetracker.unittests;
-import com.pairlearning.expensetracker.Constants;
 import com.pairlearning.expensetracker.domain.Category;
-import com.pairlearning.expensetracker.filters.AuthFilter;
 import com.pairlearning.expensetracker.resources.CategoryResource;
 import com.pairlearning.expensetracker.services.CategoryService;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -14,14 +9,9 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestBody;
 
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +38,7 @@ public class CategoryResourceTest {
     @InjectMocks
     private CategoryResource categoryResource;
 
+    // this test is checking that the getAllCategories method correctly returns a list of categories when the service returns a list of categories.
     @Test
     public void testGetAllCategoriesOK() {
         Category category = new Category( 1, 1, "Test", "Test", 100.0);
@@ -58,6 +49,8 @@ public class CategoryResourceTest {
         assertEquals(categoryResource.getAllCategories(request).getStatusCode(), HttpStatus.OK);
 
     }
+
+    // this test is checking that the getAllCategories method correctly returns a list of categories when the service returns a list of categories.
     @Test
     public void testGetAllCategoriesCategory() {
         Category category = new Category( 1, 1, "Test", "Test", 100.0);
@@ -70,6 +63,7 @@ public class CategoryResourceTest {
         assertEquals(ResponseEntity.ok(t), categoryResource.getAllCategories(request));
         verify(service, times(1)).fetchAllCategories(1);
     }
+    // this test is checking that the getCategoryById method correctly returns a category when the service returns a category.
     @Test
     public void testGetCategoryById() {
         Category category = new Category( 1, 1, "Test", "Test", 100.0);
@@ -78,6 +72,8 @@ public class CategoryResourceTest {
         assertEquals(ResponseEntity.ok(category), categoryResource.getCategoryById(request, 1));
         verify(service, times(1)).fetchCategoryById(1, 1);
     }
+
+    // this test is checking that the getCategoryById method correctly returns a category when the service returns a category.
     @Test
     public void shouldReturnCreatedStatusWhenCategoryIsAddedSuccessfully() {
         Map<String, Object> categoryMap = new HashMap<>();
@@ -117,6 +113,7 @@ public class CategoryResourceTest {
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
+
     @Test
     public void shouldReturnOkStatusWhenCategoryIsUpdatedSuccessfully() {
         Category category = new Category(1, 1, "Updated Category", "Updated Description", 100.0);
@@ -131,7 +128,7 @@ public class CategoryResourceTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(successMap, response.getBody());
     }
-
+    // this test is checking that the updateCategory method correctly handles the case where the category to update is not found by throwing a RuntimeException.
     @Test
     public void shouldThrowExceptionWhenCategoryNotFound() {
         Category category = new Category(1, 1, "Updated Category", "Updated Description", 100.0);
@@ -141,6 +138,8 @@ public class CategoryResourceTest {
 
         assertThrows(RuntimeException.class, () -> categoryResource.updateCategory(request, 1, category));
     }
+
+    // this test is checking that the deleteCategory method correctly returns a OK status when the category is deleted successfully.
     @Test
     public void shouldReturnOkStatusWhenCategoryIsDeletedSuccessfully() {
         Map<String, Boolean> successMap = new HashMap<>();
@@ -154,7 +153,7 @@ public class CategoryResourceTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(successMap, response.getBody());
     }
-
+    // this test is checking that the deleteCategory method correctly handles the case where the category to delete is not found by throwing a RuntimeException.
     @Test
     public void shouldThrowExceptionWhenCategoryToDeleteNotFound() {
         when(request.getAttribute("userId")).thenReturn(1);
